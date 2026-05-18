@@ -52,6 +52,17 @@
     animation: slideUp 0.5s cubic-bezier(0.16,1,0.3,1);
   }
 
+  /* ── MOBILE RESPONSIVE ── */
+  @media (max-width: 520px) {
+    body { padding: 0; align-items: flex-end; }
+    #chat-widget {
+      max-width: 100%;
+      border-radius: 20px 20px 0 0;
+      height: 92vh;
+      height: 92dvh;
+    }
+  }
+
   @keyframes slideUp {
     from { opacity:0; transform: translateY(24px); }
     to   { opacity:1; transform: translateY(0); }
@@ -60,9 +71,10 @@
   /* ── HEADER ── */
   .chat-header {
     background: linear-gradient(135deg, var(--saffron) 0%, #E55A00 50%, var(--crimson) 100%);
-    padding: 20px 20px 16px;
+    padding: 16px 16px 14px;
     position: relative;
     overflow: hidden;
+    flex-shrink: 0;
   }
 
   .chat-header::before {
@@ -91,21 +103,23 @@
   }
 
   .avatar {
-    width: 48px;
-    height: 48px;
+    width: 44px;
+    height: 44px;
     background: rgba(255,255,255,0.15);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 24px;
+    font-size: 22px;
     border: 2px solid rgba(255,255,255,0.3);
     flex-shrink: 0;
   }
 
+  .header-text { flex: 1; }
+
   .header-text h1 {
     font-family: 'Cinzel', serif;
-    font-size: 18px;
+    font-size: 17px;
     font-weight: 600;
     color: var(--white);
     letter-spacing: 0.5px;
@@ -136,6 +150,31 @@
     50%      { box-shadow: 0 0 0 5px rgba(74,222,128,0.1); }
   }
 
+  /* ── CLOSE BUTTON ── */
+  .close-btn {
+    width: 32px;
+    height: 32px;
+    background: rgba(255,255,255,0.15);
+    border: 1.5px solid rgba(255,255,255,0.3);
+    border-radius: 50%;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.2s;
+    line-height: 1;
+    z-index: 10;
+    position: relative;
+  }
+
+  .close-btn:hover {
+    background: rgba(255,255,255,0.28);
+    transform: scale(1.08);
+  }
+
   .header-tagline {
     font-size: 11px;
     color: rgba(255,255,255,0.7);
@@ -145,12 +184,13 @@
 
   /* ── QUICK QUESTIONS ── */
   .quick-bar {
-    padding: 10px 16px;
+    padding: 8px 12px;
     background: var(--saffron-pale);
     border-bottom: 1px solid var(--border);
     display: flex;
     gap: 6px;
     flex-wrap: wrap;
+    flex-shrink: 0;
   }
 
   .quick-btn {
@@ -178,11 +218,12 @@
   .messages {
     flex: 1;
     overflow-y: auto;
-    padding: 16px;
+    padding: 14px;
     display: flex;
     flex-direction: column;
     gap: 12px;
     scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
   }
 
   .messages::-webkit-scrollbar { width: 4px; }
@@ -205,13 +246,13 @@
   .msg.bot  { align-self: flex-start; }
 
   .msg-avatar {
-    width: 30px;
-    height: 30px;
+    width: 28px;
+    height: 28px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 14px;
+    font-size: 13px;
     flex-shrink: 0;
     margin-top: 2px;
   }
@@ -220,11 +261,12 @@
   .msg.user .msg-avatar { background: var(--saffron); }
 
   .msg-bubble {
-    padding: 10px 14px;
+    padding: 10px 13px;
     border-radius: 16px;
     font-size: 13.5px;
     line-height: 1.6;
     max-width: 100%;
+    word-break: break-word;
   }
 
   .msg.bot .msg-bubble {
@@ -261,12 +303,12 @@
   }
 
   .typing-avatar {
-    width: 30px; height: 30px;
+    width: 28px; height: 28px;
     border-radius: 50%;
     background: var(--saffron-pale);
     border: 1px solid var(--border);
     display: flex; align-items: center; justify-content: center;
-    font-size: 14px; flex-shrink: 0;
+    font-size: 13px; flex-shrink: 0;
   }
 
   .typing-bubble {
@@ -297,9 +339,10 @@
 
   /* ── INPUT AREA ── */
   .input-area {
-    padding: 12px 16px 16px;
+    padding: 10px 14px 14px;
     border-top: 1px solid var(--border);
     background: var(--white);
+    flex-shrink: 0;
   }
 
   .input-row {
@@ -309,7 +352,7 @@
     background: var(--saffron-pale);
     border: 1.5px solid var(--border);
     border-radius: 24px;
-    padding: 8px 8px 8px 16px;
+    padding: 8px 8px 8px 14px;
     transition: border-color 0.2s;
   }
 
@@ -338,7 +381,7 @@
   }
 
   #send-btn {
-    width: 38px; height: 38px;
+    width: 36px; height: 36px;
     background: linear-gradient(135deg, var(--saffron), #E55A00);
     border: none;
     border-radius: 50%;
@@ -355,13 +398,13 @@
   #send-btn:active { transform: scale(0.96); }
   #send-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
-  #send-btn svg { width: 16px; height: 16px; fill: white; }
+  #send-btn svg { width: 15px; height: 15px; fill: white; }
 
   .footer-note {
     text-align: center;
     font-size: 10px;
     color: var(--gray);
-    margin-top: 8px;
+    margin-top: 7px;
     opacity: 0.6;
     font-family: 'Tiro Devanagari Hindi', serif;
   }
@@ -376,11 +419,11 @@
     animation: fadeIn 0.5s ease;
   }
 
-  .welcome-card .om { font-size: 32px; margin-bottom: 8px; }
+  .welcome-card .om { font-size: 30px; margin-bottom: 8px; }
 
   .welcome-card h2 {
     font-family: 'Cinzel', serif;
-    font-size: 15px;
+    font-size: 14px;
     color: var(--saffron);
     margin-bottom: 6px;
   }
@@ -391,6 +434,9 @@
     line-height: 1.6;
     font-family: 'Tiro Devanagari Hindi', serif;
   }
+
+  /* ── HIDDEN STATE ── */
+  #chat-widget.hidden { display: none; }
 </style>
 </head>
 <body>
@@ -405,6 +451,8 @@
         <h1>Devi</h1>
         <p><span class="status-dot"></span>Hindu Festival Assistant • Online</p>
       </div>
+      <!-- CLOSE BUTTON -->
+      <button class="close-btn" onclick="closeWidget()" title="Close">✕</button>
     </div>
     <div class="header-tagline">🙏 जय माता दी — Ask me in Hindi or English</div>
   </div>
@@ -452,8 +500,7 @@
 
 <script>
 // ── CONFIG ──────────────────────────────────────────────────────────────────
-const API_KEY = 'AIzaSyCW5HpPBbgcOUcn7DKOQ0RRBLQVaPGWpr4';
-const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${API_KEY}`;
+const API_URL = 'https://api.anthropic.com/v1/messages';
 
 const SYSTEM_PROMPT = `You are Devi, a warm, knowledgeable and deeply respectful Hindu festival assistant for the website durganavratri.in — "Galaxy of Hindu Gods and Goddesses".
 
@@ -482,6 +529,16 @@ TONE:
 IMPORTANT: You only answer questions about Hindu religion, festivals, fasting, spirituality and related topics. For unrelated questions politely say: "Main sirf Hindu festivals aur dharm ke baare mein help kar sakti hoon 🙏"`;
 
 let conversationHistory = [];
+
+// ── CLOSE WIDGET ─────────────────────────────────────────────────────────────
+function closeWidget() {
+  const widget = document.getElementById('chat-widget');
+  widget.style.animation = 'none';
+  widget.style.transition = 'opacity 0.3s, transform 0.3s';
+  widget.style.opacity = '0';
+  widget.style.transform = 'translateY(20px)';
+  setTimeout(() => { widget.classList.add('hidden'); }, 300);
+}
 
 // ── HELPERS ─────────────────────────────────────────────────────────────────
 function getTime() {
@@ -559,41 +616,33 @@ async function sendMessage() {
   const text  = input.value.trim();
   if (!text) return;
 
-  // Add user message
   addMessage(text, 'user');
   input.value = '';
   input.style.height = 'auto';
   btn.disabled = true;
 
-  // Add to history
-  conversationHistory.push({ role: 'user', parts: [{ text }] });
+  conversationHistory.push({ role: 'user', content: text });
 
-  // Show typing
   showTyping();
 
   try {
-    const body = {
-      system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
-      contents: conversationHistory,
-      generationConfig: {
-        temperature: 0.7,
-        maxOutputTokens: 512,
-      }
-    };
-
-    const res  = await fetch(API_URL, {
+    const res = await fetch(API_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body)
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system: SYSTEM_PROMPT,
+        messages: conversationHistory
+      })
     });
 
     const data = await res.json();
-
     hideTyping();
 
-    if (data.candidates && data.candidates[0]) {
-      const reply = data.candidates[0].content.parts[0].text;
-      conversationHistory.push({ role: 'model', parts: [{ text: reply }] });
+    if (data.content && data.content[0]) {
+      const reply = data.content[0].text;
+      conversationHistory.push({ role: 'assistant', content: reply });
       addMessage(reply, 'bot');
     } else {
       addMessage('🙏 Kshama kijiye, abhi kuch takneeki samasya aa rahi hai. Thodi der baad phir prayaas karein.', 'bot');
@@ -610,3 +659,4 @@ async function sendMessage() {
 </script>
 </body>
 </html>
+  
