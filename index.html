@@ -472,7 +472,10 @@ let conversationHistory = [];
 
 // ── CLOSE ────────────────────────────────────────────────────────────────────
 function closeWidget() {
+  // Hide inside the iframe
   document.getElementById('chat-widget').classList.add('closed');
+  // Tell the parent Blogger page to hide the iframe too
+  try { window.parent.postMessage('devi-close', '*'); } catch(e) {}
 }
 
 // ── HELPERS ──────────────────────────────────────────────────────────────────
