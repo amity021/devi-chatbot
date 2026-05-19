@@ -401,8 +401,8 @@
 
 <script>
 // ── CONFIG ──────────────────────────────────────────────────────────────────
-const GEMINI_KEY = 'AIzaSyCf90x3t0NoblIHo0QVSqIh6k8n8Fo2-8w';
-const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_KEY}`;
+const GROQ_KEY = "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";
+const API_URL = "https://api.groq.com/openai/v1/chat/completions";
 
 const SYSTEM_PROMPT = `You are Devi, a warm, knowledgeable and deeply respectful Hindu festival assistant for the website durganavratri.in.
 
@@ -496,26 +496,33 @@ async function sendMessage() {
   input.style.height = 'auto';
   btn.disabled = true;
 
-  conversationHistory.push({ role: 'user', parts: [{ text }] });
+  conversationHistory.push({ role: 'user', content: text });
   showTyping();
 
   try {
     const res = await fetch(API_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${GROQ_KEY}`
+      },
       body: JSON.stringify({
-        system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
-        contents: conversationHistory,
-        generationConfig: { temperature: 0.7, maxOutputTokens: 512 }
+        model: 'llama3-70b-8192',
+        messages: [
+          { role: 'system', content: SYSTEM_PROMPT },
+          ...conversationHistory
+        ],
+        temperature: 0.7,
+        max_tokens: 512
       })
     });
 
     const data = await res.json();
     hideTyping();
 
-    if (data.candidates?.[0]?.content?.parts?.[0]?.text) {
-      const reply = data.candidates[0].content.parts[0].text;
-      conversationHistory.push({ role: 'model', parts: [{ text: reply }] });
+    if (data.choices?.[0]?.message?.content) {
+      const reply = data.choices[0].message.content;
+      conversationHistory.push({ role: 'assistant', content: reply });
       addMessage(reply, 'bot');
     } else {
       console.error('API response:', JSON.stringify(data));
