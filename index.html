@@ -499,6 +499,13 @@ function scrollToBottom() {
   m.scrollTop = m.scrollHeight;
 }
 
+function linkify(text) {
+  // Convert URLs to clickable links
+  return text
+    .replace(/\n/g, '<br>')
+    .replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener" style="color:var(--saffron);text-decoration:underline;word-break:break-all;">$1</a>');
+}
+
 function addMessage(text, role) {
   const msgs = document.getElementById('messages');
   const div = document.createElement('div');
@@ -506,7 +513,7 @@ function addMessage(text, role) {
   div.innerHTML = `
     <div class="msg-avatar">${role === 'bot' ? '🪔' : '🙏'}</div>
     <div>
-      <div class="msg-bubble">${text.replace(/\n/g, '<br>')}</div>
+      <div class="msg-bubble">${linkify(text)}</div>
       <div class="msg-time">${getTime()}</div>
     </div>`;
   msgs.appendChild(div);
