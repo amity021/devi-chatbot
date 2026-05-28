@@ -401,7 +401,12 @@
 
 <script>
 // ── CONFIG ──────────────────────────────────────────────────────────────────
-const GROQ_KEY = "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";
+const GROQ_KEYS = [
+  "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",
+  "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",
+  "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"
+];
+let currentKeyIndex = 0;
 const API_URL = "https://api.groq.com/openai/v1/chat/completions";
 
 const SYSTEM_PROMPT = `You are Devi, a warm, knowledgeable and deeply respectful Hindu festival assistant for the website durganavratri.in — "Galaxy of Hindu Gods and Goddesses".
@@ -542,6 +547,42 @@ function hideTyping() {
 }
 
 // ── SEND ─────────────────────────────────────────────────────────────────────
+// Retry with next key silently
+async function sendMessage2(text) {
+  const btn = document.getElementById('send-btn');
+  btn.disabled = true;
+  showTyping();
+  try {
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${GROQ_KEYS[currentKeyIndex]}`
+      },
+      body: JSON.stringify({
+        model: 'llama-3.3-70b-versatile',
+        messages: [{ role: 'system', content: SYSTEM_PROMPT }, ...conversationHistory],
+        temperature: 0.7,
+        max_tokens: 512
+      })
+    });
+    const data = await res.json();
+    hideTyping();
+    if (data.choices?.[0]?.message?.content) {
+      const reply = data.choices[0].message.content;
+      conversationHistory.push({ role: 'assistant', content: reply });
+      addMessage(reply, 'bot');
+    } else {
+      addMessage('🙏 Kshama kijiye, abhi ek chhoti si samasya aa rahi hai. Thodi der baad phir prayaas karein.', 'bot');
+    }
+  } catch(err) {
+    hideTyping();
+    addMessage('🙏 Network error aa gayi. Kripya internet connection check karein.', 'bot');
+  }
+  btn.disabled = false;
+  document.getElementById('user-input').focus();
+}
+
 async function sendMessage() {
   const input = document.getElementById('user-input');
   const btn   = document.getElementById('send-btn');
@@ -561,7 +602,7 @@ async function sendMessage() {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${GROQ_KEY}`
+        'Authorization': `Bearer ${GROQ_KEYS[currentKeyIndex]}`
       },
       body: JSON.stringify({
         model: 'llama-3.3-70b-versatile',
@@ -581,6 +622,13 @@ async function sendMessage() {
       const reply = data.choices[0].message.content;
       conversationHistory.push({ role: 'assistant', content: reply });
       addMessage(reply, 'bot');
+    } else if (data.error && (data.error.code === 'rate_limit_exceeded' || data.error.code === 'model_decommissioned' || res.status === 429)) {
+      // Rotate to next key and retry automatically
+      currentKeyIndex = (currentKeyIndex + 1) % GROQ_KEYS.length;
+      console.log('Switching to key index:', currentKeyIndex);
+      btn.disabled = false;
+      sendMessage2(text);
+      return;
     } else {
       console.error('API response:', JSON.stringify(data));
       addMessage('🙏 Kshama kijiye, abhi ek chhoti si samasya aa rahi hai. Thodi der baad phir prayaas karein.', 'bot');
