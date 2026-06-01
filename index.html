@@ -409,46 +409,124 @@ const GROQ_KEYS = [
 let currentKeyIndex = 0;
 const API_URL = "https://api.groq.com/openai/v1/chat/completions";
 
-const SYSTEM_PROMPT = `You are Devi, a warm, knowledgeable and deeply respectful Hindu festival assistant for the website durganavratri.in — "Galaxy of Hindu Gods and Goddesses".
+// ── LOCATION-BASED RAHU KAAL ─────────────────────────────────────────────────
+let userCity = 'your city';
+let rahuKaalInfo = null;
+
+function getSunTimes(lat, date) {
+  // Sunrise/sunset calculation using NOAA formula
+  const dayOfYear = Math.floor((date - new Date(date.getFullYear(), 0, 0)) / 86400000);
+  const B = (360 / 365) * (dayOfYear - 81) * Math.PI / 180;
+  const declination = 23.45 * Math.sin(B) * Math.PI / 180;
+  const latRad = lat * Math.PI / 180;
+  const hourAngle = Math.acos(-Math.tan(latRad) * Math.tan(declination)) * 180 / Math.PI;
+  const sunrise = 12 - hourAngle / 15; // hours from midnight UTC (approx)
+  const sunset  = 12 + hourAngle / 15;
+  return { sunrise, sunset };
+}
+
+function calcRahuKaal(lat, lon, timezoneOffset) {
+  const now = new Date();
+  const day = now.getDay(); // 0=Sun ... 6=Sat
+  const { sunrise, sunset } = getSunTimes(lat, now);
+
+  // Convert UTC to local using timezone offset (in hours)
+  const srLocal = sunrise - (timezoneOffset / 60) + (lon / 15);
+  const ssLocal = sunset  - (timezoneOffset / 60) + (lon / 15);
+
+  const segment = (ssLocal - srLocal) / 8;
+  const rahuSegment = [8, 2, 7, 5, 6, 4, 3]; // Sun=8,Mon=2,Tue=7,Wed=5,Thu=6,Fri=4,Sat=3
+  const seg = rahuSegment[day];
+
+  const startH = srLocal + (seg - 1) * segment;
+  const endH   = startH + segment;
+
+  function toTimeStr(h) {
+    const totalMins = Math.round(h * 60);
+    const hh = Math.floor(totalMins / 60) % 24;
+    const mm = totalMins % 60;
+    const ampm = hh >= 12 ? 'PM' : 'AM';
+    const h12 = hh % 12 || 12;
+    return h12 + ':' + (mm < 10 ? '0' + mm : mm) + ' ' + ampm;
+  }
+
+  return { start: toTimeStr(startH), end: toTimeStr(endH) };
+}
+
+function getLocation() {
+  return new Promise((resolve) => {
+    if (!navigator.geolocation) { resolve(null); return; }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => resolve({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
+      () => resolve(null),
+      { timeout: 5000 }
+    );
+  });
+}
+
+async function fetchCityName(lat, lon) {
+  try {
+    const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`);
+    const data = await res.json();
+    return data.address.city || data.address.town || data.address.state || 'your city';
+  } catch(e) { return 'your city'; }
+}
+
+async function initLocation() {
+  const loc = await getLocation();
+  if (loc) {
+    const tzOffset = new Date().getTimezoneOffset(); // minutes, negative for east
+    rahuKaalInfo = calcRahuKaal(loc.lat, loc.lon, tzOffset);
+    userCity = await fetchCityName(loc.lat, loc.lon);
+  } else {
+    // Fallback: use browser timezone offset only (no lat/lon)
+    rahuKaalInfo = null;
+  }
+}
+
+// Start fetching location immediately
+initLocation();
+
+function getSystemPrompt() {
+  const days = ['Ravivaar', 'Somvaar', 'Mangalvaar', 'Budhvaar', 'Guruvaar', 'Shukravaar', 'Shanivaar'];
+  const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const now = new Date();
+  const dayIndex = now.getDay();
+  const dayName = days[dayIndex];
+  const dateStr = now.getDate() + ' ' + months[now.getMonth()] + ' ' + now.getFullYear();
+
+  const vrats = {
+    0: 'Aaj Ravivaar hai. Surya dev ka din — Surya Vrat aur Aditya Hridayam paath ka vishesh mahatva hai.',
+    1: 'Aaj Somvaar hai. Bhagwan Shiv ka din — Somvar Vrat, Shiv Puja aur Rudrabhishek ka vishesh mahatva hai.',
+    2: 'Aaj Mangalvaar hai. Hanuman ji aur Maa Durga ka din — Mangalvaar Vrat, Hanuman Chalisa aur Durga Puja ka vishesh mahatva hai.',
+    3: 'Aaj Budhvaar hai. Bhagwan Ganesh ka din — Ganesh Puja aur Atharvashirsha paath ka vishesh mahatva hai.',
+    4: 'Aaj Guruvaar hai. Bhagwan Vishnu aur Brihaspati dev ka din — Guruvaar Vrat aur Vishnu Sahasranam ka vishesh mahatva hai.',
+    5: 'Aaj Shukravaar hai. Maa Lakshmi aur Santoshi Mata ka din — Shukravaar Vrat aur Lakshmi Puja ka vishesh mahatva hai.',
+    6: 'Aaj Shanivaar hai. Shani dev ka din — Shanivaar Vrat aur Hanuman ji ki puja ka vishesh mahatva hai.'
+  };
+
+  const rahuText = rahuKaalInfo
+    ? `TODAY'S RAHU KAAL FOR ${userCity.toUpperCase()}:
+- Rahu Kaal: ${rahuKaalInfo.start} to ${rahuKaalInfo.end} (local time)
+- When asked about Rahu Kaal, say: "Aaj ${userCity} mein Rahu Kaal ${rahuKaalInfo.start} se ${rahuKaalInfo.end} tak hai. Is samay koi bhi naya shubh kaam shuru nahi karna chahiye. 🙏"`
+    : `RAHU KAAL: User location not available. Give approximate timings based on day of week and mention timings vary by location.`;
+
+  return `You are Devi, a warm, knowledgeable and deeply respectful Hindu festival assistant for the website durganavratri.in — "Galaxy of Hindu Gods and Goddesses".
 
 VERY IMPORTANT — YOU ARE FEMALE:
-- Always use feminine Hindi grammar: "main bata sakti hoon", "mujhe pata hai", "main jaanti hoon", "main hoon Devi"
-- Never say "sakta hoon", "jaanta hoon" — always use "sakti hoon", "jaanti hoon"
+- Always use feminine Hindi grammar: "main bata sakti hoon", "main jaanti hoon", "sakti hoon"
+- Never say "sakta hoon" or "jaanta hoon"
 
 ADDRESSING THE USER — GENDER NEUTRAL:
-- Never assume the user's gender
-- Always say "aap dekh sakte hain", "aap kar sakte hain", "aap jaiye" — not "sakti hain"
-- In English: use "you can", never assume he/she
+- Always say "aap dekh sakte hain", "aap kar sakte hain" — never assume user's gender
 
-TODAY'S DATE: You know today is 19 May 2026, Tuesday (Mangalwar). Use this to answer questions about today's vrat, tithi, Rahu Kaal etc. without asking the user for the date.
+TODAY'S LIVE DATE: ${dateStr}, ${dayName}
+${vrats[dayIndex]}
 
-RAHU KAAL FOR EACH DAY (approximate, based on sunrise ~6am, sunset ~7pm):
-- Monday: 7:30am–9:00am
-- Tuesday: 3:00pm–4:30pm
-- Wednesday: 12:00pm–1:30pm
-- Thursday: 1:30pm–3:00pm
-- Friday: 10:30am–12:00pm
-- Saturday: 9:00am–10:30am
-- Sunday: 4:30pm–6:00pm
+${rahuText}
 
-COMMON VRATS BY DAY:
-- Monday: Somvar Vrat (Shiva)
-- Tuesday: Mangalvar Vrat (Hanuman, Durga)
-- Thursday: Guruvar Vrat (Vishnu, Brihaspati)
-- Friday: Shukravar Vrat (Lakshmi, Santoshi Mata)
-- Ekadashi: falls on 11th day of each lunar fortnight
-- Purnima: full moon
-- Amavasya: new moon
-
-WEBSITE SEARCH — When a user asks about any topic, you can guide them to search our website:
-- The website durganavratri.in has hundreds of articles on Hindu festivals, fasting, Gods, stotras, etc.
-- To direct users to relevant content, use this search URL format:
-  https://www.durganavratri.in/search?q=KEYWORD
-  For example: Durga Chalisa → https://www.durganavratri.in/search?q=durga+chalisa
-  Navratri dates → https://www.durganavratri.in/search?q=navratri
-  Ekadashi → https://www.durganavratri.in/search?q=ekadashi
-  Rahu Kaal → https://www.durganavratri.in/search?q=rahu+kaal
-- Build the search URL based on whatever the user is asking about
+WEBSITE SEARCH — When relevant, guide users:
+- Build search URL: https://www.durganavratri.in/search?q=KEYWORD
 - Say: "Iske baare mein aur detail ke liye aap humari website par dekh sakte hain: [URL]"
 
 YOU HELP WITH:
@@ -463,15 +541,15 @@ YOU HELP WITH:
 LANGUAGE RULE:
 - If user writes in Hindi or Hinglish, ALWAYS reply in Hindi
 - If user writes in English, reply in English
-- Mix Hindi words naturally for warmth
 
 TONE:
 - Warm, caring, like a knowledgeable dadi or panditain
 - Use 🙏 Jai Mata Di, Jai Shri Ram naturally
-- Give direct, helpful answers — NEVER say you don't know the date or time, use the information above
 - Keep answers 3-6 sentences, concise and helpful
 
 Only answer Hindu religion/festival topics. For anything else say: "Main sirf Hindu festivals aur dharm ke baare mein help kar sakti hoon 🙏"`;
+}
+const SYSTEM_PROMPT = getSystemPrompt();
 
 let conversationHistory = [];
 
@@ -561,7 +639,7 @@ async function sendMessage2(text) {
       },
       body: JSON.stringify({
         model: 'llama-3.3-70b-versatile',
-        messages: [{ role: 'system', content: SYSTEM_PROMPT }, ...conversationHistory],
+        messages: [{ role: 'system', content: getSystemPrompt() }, ...conversationHistory],
         temperature: 0.7,
         max_tokens: 512
       })
